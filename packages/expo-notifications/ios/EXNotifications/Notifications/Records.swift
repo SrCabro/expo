@@ -212,12 +212,13 @@ struct CategoryTextInputActionRecord: Record {
     self.submitButtonTitle = textInputAction.textInputButtonTitle
   }
 
-  func toUNTextInputNotificationAction(identifier: String, title: String) -> UNTextInputNotificationAction {
+  func toUNTextInputNotificationAction(identifier: String, title: String, options: UNNotificationActionOptions) -> UNTextInputNotificationAction {
     return UNTextInputNotificationAction(
       identifier: identifier,
-      title: title,
+	  title: title,
+      options: options,
       textInputButtonTitle: submitButtonTitle ?? "",
-      textInputPlaceholder: placeholder ?? ""
+      textInputPlaceholder: placeholder ?? "",
     )
   }
 }
@@ -265,9 +266,7 @@ public struct CategoryActionRecord: Record {
       let buttonTitle = buttonTitle else {
       return nil
     }
-    if let textInput = textInput {
-      return textInput.toUNTextInputNotificationAction(identifier: identifier, title: buttonTitle)
-    }
+
     var notificationOptions: UNNotificationActionOptions = []
     if let optionsParams = options {
       if optionsParams.opensAppToForeground == true {
@@ -280,7 +279,11 @@ public struct CategoryActionRecord: Record {
         notificationOptions.insert(.authenticationRequired)
       }
     }
-    return UNNotificationAction(identifier: identifier, title: buttonTitle, options: notificationOptions)
+    if let textInput = textInput {
+      return textInput.toUNTextInputNotificationAction(identifier: identifier, title: buttonTitle, options: notificationOptions)
+    } else {
+      return UNNotificationAction(identifier: identifier, title: buttonTitle, options: notificationOptions)
+    }
   }
 }
 
@@ -368,9 +371,9 @@ public struct CategoryRecord: Record {
   }
 
   func toUNNotificationCategory() -> UNNotificationCategory {
-    let intentIdentifiers: [String] = options?.intentIdentifiers as? [String] ?? []
-    let previewPlaceholder: String? = options?.previewPlaceholder as? String
-    let categorySummaryFormat: String? = options?.categorySummaryFormat as? String
+    let intentIdentifiers: [String] = options?.intentIdentifiers ?? []
+    let previewPlaceholder: String? = options?.previewPlaceholder
+    let categorySummaryFormat: String? = options?.categorySummaryFormat
     let actionsArray = actions?.compactMap { action in
       return action.toUNNotificationAction()
     } ?? []
